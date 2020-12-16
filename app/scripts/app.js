@@ -27,7 +27,7 @@ import { AppView } from 'views/app-view';
 import 'hbs-helpers';
 import { AutoType } from './auto-type';
 import { Storage } from './storage';
-import { Sequencer } from 'comp/aspcom/sequencer';
+import { ServerActions } from 'comp/aspcom/ServerActions';
 import { SettingsStoreWebServer } from './comp/aspcom/settings-store-webserver';
 
 StartProfiler.milestone('loading modules');
@@ -91,22 +91,27 @@ ready(() => {
 
     function initAspCom() {
         if (Features.isAspComEnabled()) {
-            const sequencerPath = document.head.querySelector('meta[name=aspcom-api-path]');
-            if (sequencerPath && sequencerPath.content) {
-                Sequencer.path = sequencerPath.content;
+            let apiPath;
+
+            const apiPathMeta = document.head.querySelector('meta[name=aspcom-api-path]');
+
+            if (apiPathMeta && apiPathMeta.content) {
+                apiPath = apiPathMeta.content;
             }
 
-            return SettingsStoreWebServer.hydrate().catch(() => {
-                Alerts.error({
-                    header: Locale.failedToConnectToWebServer,
-                    body: Locale.failedToConnectToWebserverBody,
-                    buttons: [],
-                    esc: false,
-                    enter: false,
-                    click: false
+            return ServerActions.loadConfig(apiPath)
+                .then(() => SettingsStoreWebServer.hydrate())
+                .catch(() => {
+                    Alerts.error({
+                        header: Locale.failedToConnectToWebServer,
+                        body: Locale.failedToConnectToWebserverBody,
+                        buttons: [],
+                        esc: false,
+                        enter: false,
+                        click: false
+                    });
+                    return Promise.reject();
                 });
-                return Promise.reject();
-            });
         }
         return Promise.resolve();
     }

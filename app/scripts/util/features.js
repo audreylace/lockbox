@@ -17,6 +17,15 @@ const Features = {
         !/^http(s?):\/\/((localhost:8085)|((app|beta)\.keeweb\.info))/.test(location.href),
     isLocal: location.origin.indexOf('localhost') >= 0,
 
+    isAspComEnabled() {
+        const appcomon = document.head.querySelector('meta[name=aspcom-enabled]');
+        if (appcomon && appcomon.content && appcomon.content === 'true') {
+            return true;
+        }
+
+        return false;
+    },
+
     supportsTitleBarStyles() {
         return this.isMac;
     },

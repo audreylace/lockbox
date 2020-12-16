@@ -8,6 +8,7 @@ import { MenuSectionModel } from 'models/menu/menu-section-model';
 import { StringFormat } from 'util/formatting/string-format';
 import { Locale } from 'util/locale';
 import { Launcher } from 'comp/launcher';
+import { Features } from 'scripts/util/features';
 
 class MenuModel extends Model {
     constructor() {
@@ -128,8 +129,18 @@ class MenuModel extends Model {
         ]);
         this.filesSection = new MenuSectionModel();
         this.filesSection.set({ scrollable: true, grow: true });
-        this.menus.settings = new MenuSectionCollection(
-            [
+
+        let menuOptions;
+
+        if (Features.isAspComEnabled()) {
+            menuOptions = [
+                this.generalSection,
+                this.shortcutsSection,
+                this.devicesSection,
+                this.filesSection
+            ];
+        } else {
+            menuOptions = [
                 this.generalSection,
                 this.shortcutsSection,
                 this.pluginsSection,
@@ -137,8 +148,11 @@ class MenuModel extends Model {
                 this.aboutSection,
                 this.helpSection,
                 this.filesSection
-            ].filter((s) => s)
-        );
+            ];
+        }
+
+        this.menus.settings = new MenuSectionCollection(menuOptions.filter((s) => s));
+
         this.sections = this.menus.app;
 
         Events.on('set-locale', this._setLocale.bind(this));

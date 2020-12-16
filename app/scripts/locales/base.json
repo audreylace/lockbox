@@ -34,6 +34,8 @@
     "dropbox": "Dropbox",
     "gdrive": "Google Drive",
     "onedrive": "OneDrive",
+    "remoteStorage": "Webserver",
+    
 
     "menuAllItems": "All Items",
     "menuColors": "Colors",

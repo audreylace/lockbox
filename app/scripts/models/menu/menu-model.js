@@ -8,7 +8,7 @@ import { MenuSectionModel } from 'models/menu/menu-section-model';
 import { StringFormat } from 'util/formatting/string-format';
 import { Locale } from 'util/locale';
 import { Launcher } from 'comp/launcher';
-import { Features } from 'scripts/util/features';
+import { Features } from 'util/features';
 
 class MenuModel extends Model {
     constructor() {

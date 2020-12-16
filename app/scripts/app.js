@@ -27,7 +27,7 @@ import { AppView } from 'views/app-view';
 import 'hbs-helpers';
 import { AutoType } from './auto-type';
 import { Storage } from './storage';
-import { ServerActions } from 'comp/aspcom/ServerActions';
+import { ServerActions } from 'comp/aspcom/server-actions';
 import { SettingsStoreWebServer } from './comp/aspcom/settings-store-webserver';
 
 StartProfiler.milestone('loading modules');

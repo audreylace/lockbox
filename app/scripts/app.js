@@ -27,6 +27,8 @@ import { AppView } from 'views/app-view';
 import 'hbs-helpers';
 import { AutoType } from './auto-type';
 import { Storage } from './storage';
+import { Sequencer } from 'comp/aspcom/sequencer';
+import { SettingsStoreWebServer } from './comp/aspcom/settings-store-webserver';
 
 StartProfiler.milestone('loading modules');
 
@@ -75,14 +77,38 @@ ready(() => {
     }
 
     function loadConfigs() {
-        return Promise.all([
-            AppSettingsModel.load(),
-            UpdateModel.load(),
-            RuntimeDataModel.load(),
-            FileInfoCollection.load()
-        ]).then(() => {
-            StartProfiler.milestone('loading configs');
+        return initAspCom().then(() => {
+            Promise.all([
+                AppSettingsModel.load(),
+                UpdateModel.load(),
+                RuntimeDataModel.load(),
+                FileInfoCollection.load()
+            ]).then(() => {
+                StartProfiler.milestone('loading configs');
+            });
         });
+    }
+
+    function initAspCom() {
+        if (Features.isAspComEnabled()) {
+            const sequencerPath = document.head.querySelector('meta[name=aspcom-api-path]');
+            if (sequencerPath && sequencerPath.content) {
+                Sequencer.path = sequencerPath.content;
+            }
+
+            return SettingsStoreWebServer.hydrate().catch(() => {
+                Alerts.error({
+                    header: Locale.failedToConnectToWebServer,
+                    body: Locale.failedToConnectToWebserverBody,
+                    buttons: [],
+                    esc: false,
+                    enter: false,
+                    click: false
+                });
+                return Promise.reject();
+            });
+        }
+        return Promise.resolve();
     }
 
     function initModules() {
@@ -112,19 +138,26 @@ ready(() => {
         return Promise.resolve()
             .then(() => {
                 SettingsManager.setBySettings(appModel.settings);
-                const configParam = getConfigParam();
-                if (configParam) {
-                    return appModel
-                        .loadConfig(configParam)
-                        .then(() => {
-                            SettingsManager.setBySettings(appModel.settings);
-                        })
-                        .catch((e) => {
-                            if (!appModel.settings.cacheConfigSettings) {
-                                showSettingsLoadError();
-                                throw e;
-                            }
-                        });
+                if (Features.isAspComEnabled()) {
+                    SettingsStoreWebServer.load('aspComConfig').then((value) => {
+                        appModel.applyUserConfig(value);
+                        SettingsManager.setBySettings(appModel.settings);
+                    });
+                } else {
+                    const configParam = getConfigParam();
+                    if (configParam) {
+                        return appModel
+                            .loadConfig(configParam)
+                            .then(() => {
+                                SettingsManager.setBySettings(appModel.settings);
+                            })
+                            .catch((e) => {
+                                if (!appModel.settings.cacheConfigSettings) {
+                                    showSettingsLoadError();
+                                    throw e;
+                                }
+                            });
+                    }
                 }
             })
             .then(() => {

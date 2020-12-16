@@ -1,12 +1,14 @@
 import { Launcher } from 'comp/launcher';
-import { StorageCache } from 'storage/impl/storage-cache';
-import { StorageDropbox } from 'storage/impl/storage-dropbox';
+import { RemoteStorage } from 'comp/aspcom/remote-storage';
 import { StorageFile } from 'storage/impl/storage-file';
 import { StorageFileCache } from 'storage/impl/storage-file-cache';
+import { createOAuthSession } from 'storage/pkce';
 import { StorageGDrive } from 'storage/impl/storage-gdrive';
 import { StorageOneDrive } from 'storage/impl/storage-onedrive';
 import { StorageWebDav } from 'storage/impl/storage-webdav';
-import { createOAuthSession } from 'storage/pkce';
+import { StorageDropbox } from 'storage/impl/storage-dropbox';
+import { StorageCache } from 'storage/impl/storage-cache';
+import { Features } from 'util/features';
 
 const BuiltInStorage = {
     file: new StorageFile(),
@@ -23,6 +25,10 @@ const ThirdPartyStorage = {
 const Storage = BuiltInStorage;
 if (!Launcher || Launcher.thirdPartyStoragesSupported) {
     Object.assign(Storage, ThirdPartyStorage);
+}
+
+if(Features.isAspComEnabled()) {
+    Storage.remoteStorage = new RemoteStorage();
 }
 
 requestAnimationFrame(createOAuthSession);

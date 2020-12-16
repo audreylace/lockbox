@@ -116,7 +116,7 @@ class OpenView extends View {
 
         super.render({
             lastOpenFiles: this.getLastOpenFiles(),
-            canOpenKeyFromDropbox: !Launcher && Storage.dropbox.enabled,
+            canOpenKeyFromDropbox: !Launcher && Storage.dropbox && Storage.dropbox.enabled,
             demoOpened: this.model.settings.demoOpened,
             storageProviders,
             canOpen: this.model.settings.canOpen,

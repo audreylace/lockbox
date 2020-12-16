@@ -5,7 +5,7 @@ import { Logger } from 'util/logger';
 const logger = new Logger('webserverremotestorage');
 
 class RemoteStorage extends StorageBase {
-    name = 'RemoteStorage';
+    name = 'remoteStorage';
     icon = 'server';
     enabled = true;
     uipos = 10;

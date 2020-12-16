@@ -4,10 +4,7 @@
         {{#ifeq storage 'file'}}<p>{{res 'setFilePath'}}: {{path}}</p>{{/ifeq}}
         {{#ifneq storage 'file'}}<p>{{#res 'setFileStorage'}}{{res storage}}{{/res}}</p>{{/ifneq}}
     {{else}}
-        <p>{{res 'setFileIntl'}}.</p>
-        {{#unless supportFiles}}
-            <p>{{res 'setFileLocalHint'}} <a href="{{desktopLink}}" target="_blank">{{res 'setFileDownloadApp'}}</a></p>
-        {{/unless}}
+       
     {{/if}}
 
     <div class="settings__file-buttons">

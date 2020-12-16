@@ -18,30 +18,30 @@ class RemoteStorage extends StorageBase {
         return name;
     }
 
-    stat(path, _, callback) {
-
-        return ServerActions.getFileVersion(path)
-        .then((rev) => callback(null, {rev }));
+    stat(path, opts, callback) {
+        return ServerActions.statKBDX(path)
+            .then((rev) => callback(null, { rev }))
+            .catch((err) => callback(err));
     }
 
-    save(id, _, data, callback) {
-        return ServerActions.saveKBDX(id, data)
-            .then((results) => {
-                if (callback) {
-                    callback(results.error, results.name);
+    save(id, opts, data, callback, version) {
+        return ServerActions.saveKBDX(id, data, version)
+            .then((version) => callback(null, version))
+            .catch((error) => {
+                if (error.versionMismatch) {
+                    error.revConflict = true;
+                    callback(error);
+                } else {
+                    logger.error(`Error saving kbdx with ${id} to remote webserver`, error);
+                    callback(error);
                 }
-            })
-            .catch((error) =>
-                logger.error(`Error saving kbdx with ${id} to remote webserver`, error)
-            );
+            });
     }
 
     load(id, _, callback) {
         return ServerActions.loadKBDX(id)
             .then((results) => {
-                if (callback) {
-                    callback(results.error, results.vault, results.version);
-                }
+                callback(results.error, results.vault, results.version);
             })
             .catch((error) => {
                 logger.error(`Error loading kbdx with ${id} from remote webserver`, error);
@@ -50,14 +50,22 @@ class RemoteStorage extends StorageBase {
     }
 
     remove(id, _, callback) {
-        return this.save(id, _, null, callback);
+        return ServerActions.deleteKBDX(id)
+            .then(() => callback())
+            .catch((err) => callback(err));
     }
 
     list(_, callback) {
-
-        //path
-        
-        callback(null, []);
+        return ServerActions.listKBDX()
+            .then((list) => {
+                callback(
+                    null,
+                    list.map((f) => {
+                        return { name: f.name, path: f.name, rev: f.version };
+                    })
+                );
+            })
+            .catch((err) => callback(err));
     }
 }
 

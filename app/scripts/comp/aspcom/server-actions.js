@@ -1,10 +1,18 @@
-import { Sequencer } from './sequencer';
-
 const ServerActions = {
     activeRequest: Promise.resolve(),
-    fetchTemplates: {},
 
-    request(name, data) {
+    fetchTemplates: {
+        getconfig: {
+            path: '/api/config',
+            template: {
+                method: 'GET',
+                cache: 'no-cache',
+                redirect: 'follow'
+            }
+        }
+    },
+
+    issueRequest(name, data, overrides) {
         const fetchTemplate = this.fetchTemplates[name];
         if (!fetchTemplate) {
             return Promise.reject(new Error('Request method was not defined by webserver'));
@@ -13,16 +21,37 @@ const ServerActions = {
         this.activeRequest = this.activeRequest
             .then(() => {
                 const fetchOptions = { ...fetchTemplate.options };
-                fetchOptions.body = JSON.stringify(data);
 
-                return fetch(fetchTemplate.path);
+                if (!overrides) {
+                    overrides = {};
+                }
+
+                if (overrides.template) {
+                    Object.assign(fetchOptions, overrides.template);
+                }
+
+                if (fetchTemplate.hasBody || overrides.hasBody) {
+                    fetchOptions.body = JSON.stringify(data);
+                }
+
+                const path = overrides.path;
+                return fetch(path || fetchTemplate.path, fetchOptions);
             })
             .then((response) => {
                 if (!response.ok) {
                     return Promise.reject(`Request failed for ${fetchTemplate.path}`);
                 }
 
-                return response.json();
+                return response.json().then((jsonResponse) => {
+                    if (!jsonResponse) {
+                        return Promise.reject(
+                            new Error('Invalid response returned from web server')
+                        );
+                    }
+                    if (jsonResponse.error) {
+                        return Promise.reject(jsonResponse.error);
+                    }
+                });
             });
 
         this.activeRequest.catch(() => {
@@ -32,33 +61,17 @@ const ServerActions = {
         return this.activeRequest;
     },
 
-    /** Name of handlers on the webserver */
-    requests: {
-        hydrateApplication: 'hydrate',
-        saveKBDX: 'savekbdx',
-        loadKBDX: 'loadkbdx',
-        saveSettings: 'savesetting',
-        loadSetting: 'loadsetting',
-        getFileVersion: ''
+    loadConfig(path) {
+        return this.issueRequest('getconfig', undefined, { path }).then(
+            (response) => response.data
+        );
     },
-    isSane(response) {
-        if (!response) {
-            return Promise.reject(new Error('Invalid response returned from web server'));
-        }
 
-        if (response.error) {
-            return Promise.reject(response.error);
-        }
-
-        return response;
-    },
     /**
      * Hydrates the application loading all settings for the app.
      */
-    hydrate() {
-        return Sequencer.request(this.requests.hydrateApplication, {})
-            .then((response) => this.isSane(response))
-            .then((response) => response.data);
+    hydrateSettings() {
+        return this.issueRequest('hydrate').then((response) => response.data);
     },
     /**
      * syncs a KBDX vault to the web server. If this is a new vault, then the associated record will be
@@ -66,68 +79,46 @@ const ServerActions = {
      * web server will then delete the record.
      * @param {string} key The name of the KBDX vault to save.
      * @param {object} vault The KBDX object to save. Pass in null here to delete an existing vault.
-     * @returns A single object with the following properties:
-     *  {
-     *      name {string} Name of the vault
-     *      error {error | undefined} If the save fails, this will have the
-     *                                failure reason. Otherwise this will be undefined.
-     *  }
      */
-    saveKBDX(key, vault) {
-        return Sequencer.request(this.requests.saveKBDX, { key, vault }).then((response) =>
-            this.isSane(response)
+    saveKBDX(key, vault, version) {
+        return this.issueRequest('savekbdx', { key, vault, version }).then(
+            (response) => response.version
         );
     },
     /**
      * Loads a KBDX vault from the web server given the key.
      * @param {string} name of the KBDX vault to load
-     * @returns
-     * {
-     *  key {string} Name of the vault
-     *  vault {object | null} The vault if it exists, otherwise null.
-     *  error {error | undefined} If an error occurs then this will be populated.
-     * }
      */
     loadKBDX(key) {
-        return Sequencer.request(this.requests.loadKBDX, { key }).then((response) =>
-            this.isSane(response)
-        );
+        return this.issueRequest('loadKBDX', { key }).then((response) => response.vault);
+    },
+    statKBDX(key) {
+        return this.issueRequest('statkbdx', { key }).then((response) => response.version);
+    },
+    removeKBDX(key) {
+        return this.issueRequest('removekbdx', { key }).then((response) => undefined);
+    },
+    listKBDX() {
+        return this.issueRequest('listkbdx').then((response) => response.list);
     },
     /**
      *
      * @param {string} key The name of the setting to save
-     * @param {any} data The value to save
-     * @returns
-     * {
-     *   name {string} Name of the setting updated
-     *   error {error | undefined}
-     * }
+     * @param {any} value The value to save
      */
-    saveSetting(key, data) {
-        return Sequencer.request(this.requests.saveSettings, { key, data }).then((response) =>
-            this.isSane(response)
-        );
+    saveSetting(key, value) {
+        return this.issueRequest('savesetting', { key, value }).then((response) => undefined);
     },
     /**
      * Loads a setting key from the web server
      * @param {string} key The key to load
-     * @returns
-     * {
-     *  name {string} Name of setting loaded
-     *  value {any} The value at this setting
-     *  error {error | undefined}
-     * }
      */
     loadSetting(key) {
-        return Sequencer.request(this.requests.loadSetting, { key }).then((response) =>
-            this.isSane(response)
-        );
+        return this.issueRequest('loadsettings', { key }).then((response) => response.value);
     },
 
     getFileVersion(key) {
-        return Sequencer.request(this.requests.getFileVersion, { key })
-            .then((response) => this.isSane(response))
-            .then((response) => response.version);
+        return this.issueRequest('getfileversion', { key }).then((response) => response.version);
     }
 };
 

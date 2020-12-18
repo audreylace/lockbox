@@ -41,6 +41,7 @@ function config(options) {
         progress: false,
         failOnError: true,
         resolve: {
+            extensions: ['.tsx', '.ts', '.js'],
             modules: [
                 path.join(rootDir, 'app/scripts'),
                 path.join(rootDir, 'app/styles'),
@@ -175,7 +176,12 @@ function config(options) {
                 },
                 { test: /fontawesome.*\.woff2$/, loader: 'fontawesome-loader' },
                 { test: /\.pem$/, loader: 'raw-loader' },
-                { test: /\.kdbx$/, loader: 'base64-loader' }
+                { test: /\.kdbx$/, loader: 'base64-loader' },
+                {
+                    test: /\.tsx?$/,
+                    use: 'ts-loader',
+                    exclude: /node_modules/
+                }
             ]
         },
         optimization: {

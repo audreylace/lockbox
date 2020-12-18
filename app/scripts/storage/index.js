@@ -1,5 +1,5 @@
 import { Launcher } from 'comp/launcher';
-import { ASPComStorage } from 'comp/aspcom';
+import { ASPComStorage, isAspComEnabled } from 'comp/aspcom';
 import { StorageFile } from 'storage/impl/storage-file';
 import { StorageFileCache } from 'storage/impl/storage-file-cache';
 import { createOAuthSession } from 'storage/pkce';
@@ -8,7 +8,6 @@ import { StorageOneDrive } from 'storage/impl/storage-onedrive';
 import { StorageWebDav } from 'storage/impl/storage-webdav';
 import { StorageDropbox } from 'storage/impl/storage-dropbox';
 import { StorageCache } from 'storage/impl/storage-cache';
-import { Features } from 'util/features';
 
 const BuiltInStorage = {
     file: new StorageFile(),
@@ -27,7 +26,7 @@ if (!Launcher || Launcher.thirdPartyStoragesSupported) {
     Object.assign(Storage, ThirdPartyStorage);
 }
 
-if (Features.isAspComEnabled()) {
+if (isAspComEnabled()) {
     Storage.remoteStorage = new ASPComStorage();
 }
 

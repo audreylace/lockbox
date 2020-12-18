@@ -1,5 +1,5 @@
 import { Launcher } from 'comp/launcher';
-import { RemoteStorage } from 'comp/aspcom/remote-storage';
+import { ASPComStorage } from 'comp/aspcom';
 import { StorageFile } from 'storage/impl/storage-file';
 import { StorageFileCache } from 'storage/impl/storage-file-cache';
 import { createOAuthSession } from 'storage/pkce';
@@ -27,8 +27,8 @@ if (!Launcher || Launcher.thirdPartyStoragesSupported) {
     Object.assign(Storage, ThirdPartyStorage);
 }
 
-if(Features.isAspComEnabled()) {
-    Storage.remoteStorage = new RemoteStorage();
+if (Features.isAspComEnabled()) {
+    Storage.remoteStorage = new ASPComStorage();
 }
 
 requestAnimationFrame(createOAuthSession);

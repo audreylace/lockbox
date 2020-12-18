@@ -27,8 +27,7 @@ import { AppView } from 'views/app-view';
 import 'hbs-helpers';
 import { AutoType } from './auto-type';
 import { Storage } from './storage';
-import { ServerActions } from 'comp/aspcom/server-actions';
-import { SettingsStoreWebServer } from './comp/aspcom/settings-store-webserver';
+import { ASPComServerModel, initAspCom, isAspComEnabled } from 'comp/aspcom';
 
 StartProfiler.milestone('loading modules');
 
@@ -77,43 +76,28 @@ ready(() => {
     }
 
     function loadConfigs() {
-        return initAspCom().then(() => {
-            Promise.all([
-                AppSettingsModel.load(),
-                UpdateModel.load(),
-                RuntimeDataModel.load(),
-                FileInfoCollection.load()
-            ]).then(() => {
-                StartProfiler.milestone('loading configs');
-            });
-        });
-    }
-
-    function initAspCom() {
-        if (Features.isAspComEnabled()) {
-            let apiPath;
-
-            const apiPathMeta = document.head.querySelector('meta[name=aspcom-api-path]');
-
-            if (apiPathMeta && apiPathMeta.content) {
-                apiPath = apiPathMeta.content;
-            }
-
-            return ServerActions.loadConfig(apiPath)
-                .then(() => SettingsStoreWebServer.hydrate())
-                .catch(() => {
-                    Alerts.error({
-                        header: Locale.failedToConnectToWebServer,
-                        body: Locale.failedToConnectToWebserverBody,
-                        buttons: [],
-                        esc: false,
-                        enter: false,
-                        click: false
-                    });
-                    return Promise.reject();
+        return initAspCom()
+            .then(() => {
+                Promise.all([
+                    AppSettingsModel.load(),
+                    UpdateModel.load(),
+                    RuntimeDataModel.load(),
+                    FileInfoCollection.load()
+                ]).then(() => {
+                    StartProfiler.milestone('loading configs');
                 });
-        }
-        return Promise.resolve();
+            })
+            .catch(() => {
+                Alerts.error({
+                    header: Locale.failedToConnectToWebServer,
+                    body: Locale.failedToConnectToWebserverBody,
+                    buttons: [],
+                    esc: false,
+                    enter: false,
+                    click: false
+                });
+                return Promise.reject();
+            });
     }
 
     function initModules() {
@@ -143,11 +127,9 @@ ready(() => {
         return Promise.resolve()
             .then(() => {
                 SettingsManager.setBySettings(appModel.settings);
-                if (Features.isAspComEnabled()) {
-                    SettingsStoreWebServer.load('aspComConfig').then((value) => {
-                        appModel.applyUserConfig(value);
-                        SettingsManager.setBySettings(appModel.settings);
-                    });
+                if (isAspComEnabled() && ASPComServerModel.clientConfig) {
+                    appModel.applyUserConfig(ASPComServerModel.clientConfig);
+                    SettingsManager.setBySettings(appModel.settings);
                 } else {
                     const configParam = getConfigParam();
                     if (configParam) {

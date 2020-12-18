@@ -8,7 +8,7 @@ import { MenuSectionModel } from 'models/menu/menu-section-model';
 import { StringFormat } from 'util/formatting/string-format';
 import { Locale } from 'util/locale';
 import { Launcher } from 'comp/launcher';
-import { Features } from 'util/features';
+import { isAspComEnabled } from 'comp/aspcom';
 
 class MenuModel extends Model {
     constructor() {
@@ -132,7 +132,7 @@ class MenuModel extends Model {
 
         let menuOptions;
 
-        if (Features.isAspComEnabled()) {
+        if (isAspComEnabled()) {
             menuOptions = [
                 this.generalSection,
                 this.shortcutsSection,

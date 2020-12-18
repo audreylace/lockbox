@@ -1,10 +1,9 @@
 import { SettingsStoreLocal } from './settings-store-local';
-import { ASPComSettingsStore } from 'comp/aspcom';
-import { Features } from 'util/features';
+import { ASPComSettingsStore, isAspComEnabled } from 'comp/aspcom';
 
 let exportValue = SettingsStoreLocal;
 
-if (Features.isAspComEnabled()) {
+if (isAspComEnabled()) {
     exportValue = ASPComSettingsStore;
 }
 

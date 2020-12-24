@@ -179,8 +179,7 @@ function config(options) {
                 { test: /\.kdbx$/, loader: 'base64-loader' },
                 {
                     test: /\.tsx?$/,
-                    use: 'ts-loader',
-                    exclude: /node_modules/
+                    loader: 'babel-loader'
                 }
             ]
         },

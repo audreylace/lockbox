@@ -2,7 +2,7 @@ import { StorageBase } from 'storage/storage-base';
 import { ASPComServerModel } from './aspcom-server-model';
 import { Logger } from 'util/logger';
 
-const logger = new Logger('webserverremotestorage');
+const logger = new Logger('ASPComStorage');
 
 type ListType = { name: string; path: string; rev: string };
 type StatCallback = (error?: any, data?: { rev: string }) => void;
@@ -23,9 +23,11 @@ export class ASPComStorage extends StorageBase {
 
     public async stat(path: string, _opts: any, callback: StatCallback) {
         if (ASPComServerModel.inTestingMode) {
+            logger.debug(`Skipping stat call to remote server since in testing mode`);
             const data = ASPComServerModel.getVaultOpenData();
             callback(null, { rev: data.rev });
         } else {
+            logger.debug(`Attempting to stat ${path} via remote server`);
             try {
                 const rev = await ASPComServerModel.statKBDX(path);
                 callback(null, { rev });
@@ -49,6 +51,7 @@ export class ASPComStorage extends StorageBase {
                 callback(null, { rev: openInfo.rev });
             }, 3000);
         } else {
+            logger.debug(`Attempting to save ${id} to remote server`);
             try {
                 const newVersion = await ASPComServerModel.saveKBDX(id, data, currentVersion);
                 callback(null, { rev: newVersion });
@@ -65,6 +68,7 @@ export class ASPComStorage extends StorageBase {
 
     public async load(id: string, _: any, callback: LoadCallback) {
         try {
+            logger.debug(`Attempting to load ${id} from remote server`);
             const results = await ASPComServerModel.loadKBDX(id);
             callback(results.error, results.vault, results.version);
         } catch (error) {
@@ -77,6 +81,7 @@ export class ASPComStorage extends StorageBase {
         let error = null;
 
         try {
+            logger.debug(`Attempting to remove ${id} from remote server`);
             await ASPComServerModel.removeKBDX(id);
         } catch (err) {
             error = err;
@@ -88,6 +93,7 @@ export class ASPComStorage extends StorageBase {
         let error = null;
         let data: ListType[] = [];
         try {
+            logger.debug(`Attempting to list vaults on remote server`);
             const list = await ASPComServerModel.listKBDX();
             data = list.map((f) => {
                 return { name: f.name, path: f.name, rev: f.version };

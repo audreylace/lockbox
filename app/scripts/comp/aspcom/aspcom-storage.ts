@@ -22,11 +22,16 @@ export class ASPComStorage extends StorageBase {
     }
 
     public async stat(path: string, _opts: any, callback: StatCallback) {
-        try {
-            const rev = await ASPComServerModel.statKBDX(path);
-            callback(null, { rev });
-        } catch (err) {
-            callback(err);
+        if (ASPComServerModel.inTestingMode) {
+            const data = ASPComServerModel.getVaultOpenData();
+            callback(null, { rev: data.rev });
+        } else {
+            try {
+                const rev = await ASPComServerModel.statKBDX(path);
+                callback(null, { rev });
+            } catch (err) {
+                callback(err);
+            }
         }
     }
 
@@ -37,16 +42,24 @@ export class ASPComStorage extends StorageBase {
         callback: SaveCallback,
         currentVersion: string
     ) {
-        try {
-            const newVersion = await ASPComServerModel.saveKBDX(id, data, currentVersion);
-            callback(null, { rev: newVersion });
-        } catch (error) {
-            if (error.code === 2000) {
-                error.revConflict = true;
-            } else {
-                logger.error(`Error saving kbdx with ${id} to remote webserver`, error);
+        if (ASPComServerModel.inTestingMode) {
+            setTimeout(() => {
+                ASPComServerModel.updateVaultDataInTestingMode(data);
+                const openInfo = ASPComServerModel.getVaultOpenData();
+                callback(null, { rev: openInfo.rev });
+            }, 3000);
+        } else {
+            try {
+                const newVersion = await ASPComServerModel.saveKBDX(id, data, currentVersion);
+                callback(null, { rev: newVersion });
+            } catch (error) {
+                if (error.code === 2000) {
+                    error.revConflict = true;
+                } else {
+                    logger.error(`Error saving kbdx with ${id} to remote webserver`, error);
+                }
+                callback(error);
             }
-            callback(error);
         }
     }
 

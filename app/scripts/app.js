@@ -27,7 +27,13 @@ import { AppView } from 'views/app-view';
 import 'hbs-helpers';
 import { AutoType } from './auto-type';
 import { Storage } from './storage';
-import { ASPComServerModel, initAspCom, isAspComEnabled } from 'comp/aspcom';
+import {
+    ASPComServerModel,
+    initAspCom,
+    isAspComEnabled,
+    beforeShowAppView,
+    afterShowAppView
+} from 'comp/aspcom';
 
 StartProfiler.milestone('loading modules');
 
@@ -127,8 +133,8 @@ ready(() => {
         return Promise.resolve()
             .then(() => {
                 SettingsManager.setBySettings(appModel.settings);
-                if (isAspComEnabled() && ASPComServerModel.clientConfig) {
-                    appModel.applyUserConfig(ASPComServerModel.clientConfig);
+                if (isAspComEnabled() && ASPComServerModel.getAppConfig()) {
+                    appModel.applyUserConfig(ASPComServerModel.getAppConfig());
                     SettingsManager.setBySettings(appModel.settings);
                 } else {
                     const configParam = getConfigParam();
@@ -200,7 +206,15 @@ ready(() => {
     }
 
     function showView() {
-        new AppView(appModel).render();
+        const appView = new AppView(appModel);
+
+        beforeShowAppView(appView, appModel);
+
+        appView.disableOpenScreen = true; // isAspComEnabled();
+        appView.render();
+
+        afterShowAppView(appView, appModel);
+
         StartProfiler.milestone('first view rendering');
 
         Events.emit('app-ready');

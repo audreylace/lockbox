@@ -31,7 +31,10 @@ class AppView extends View {
     parent = 'body';
 
     template = template;
+    __doNotRaiseLock = false;
 
+    disableOpenScreen = false;
+    logger = new Logger('AppView');
     events = {
         contextmenu: 'contextMenu',
         drop: 'drop',
@@ -139,31 +142,38 @@ class AppView extends View {
         this.views.list.render();
         this.views.listDrag.render();
         this.views.details.render();
-        this.showLastOpenFile();
+        if (!this.disableOpenScreen) {
+            this.showLastOpenFile();
+        }
     }
 
     showOpenFile() {
-        this.hideContextMenu();
-        this.views.menu.hide();
-        this.views.menuDrag.hide();
-        this.views.listWrap.hide();
-        this.views.list.hide();
-        this.views.listDrag.hide();
-        this.views.details.hide();
-        this.views.footer.toggle(this.model.files.hasOpenFiles());
-        this.hidePanelView();
-        this.hideSettings();
-        this.hideOpenFile();
-        this.hideKeyChange();
-        this.hideImportCsv();
-        this.views.open = new OpenView(this.model);
-        this.views.open.render();
-        this.views.open.on('close', () => {
-            this.showEntries();
-        });
-        this.views.open.on('remove', () => {
-            Events.emit('closed-open-view');
-        });
+        if (!this.disableOpenScreen) {
+            this.hideContextMenu();
+            this.views.menu.hide();
+            this.views.menuDrag.hide();
+            this.views.listWrap.hide();
+            this.views.list.hide();
+            this.views.listDrag.hide();
+            this.views.details.hide();
+            this.views.footer.toggle(this.model.files.hasOpenFiles());
+            this.hidePanelView();
+            this.hideSettings();
+            this.hideOpenFile();
+            this.hideKeyChange();
+            this.hideImportCsv();
+            this.views.open = new OpenView(this.model);
+            this.views.open.render();
+            this.views.open.on('close', () => {
+                this.showEntries();
+            });
+            this.views.open.on('remove', () => {
+                Events.emit('closed-open-view');
+            });
+        } else {
+            Alerts.error({ header: 'Open view is disabled' });
+            this.logger.error('Call to show open file when disable open screen is true');
+        }
     }
 
     showLastOpenFile() {
@@ -307,9 +317,11 @@ class AppView extends View {
     fileListUpdated() {
         if (this.model.files.hasOpenFiles()) {
             this.showEntries();
-        } else {
+        } else if (!this.disableOpenScreen) {
             this.showOpenFile();
             this.selectLastOpenFile();
+        } else if (!this.__doNotRaiseLock) {
+            this.emit('lock');
         }
     }
 
@@ -600,6 +612,7 @@ class AppView extends View {
     }
 
     closeAllFilesAndShowFirst() {
+        this.__doNotRaiseLock = true;
         let fileToShow = this.model.files.find(
             (file) => !file.demo && !file.created && !file.external
         );
@@ -607,16 +620,22 @@ class AppView extends View {
         if (!fileToShow) {
             fileToShow = this.model.fileInfos[0];
         }
-        if (fileToShow) {
-            const fileInfo = this.model.fileInfos.getMatch(
-                fileToShow.storage,
-                fileToShow.name,
-                fileToShow.path
-            );
-            if (fileInfo) {
-                this.views.open.showOpenFileInfo(fileInfo);
+
+        if (!this.disableOpenScreen) {
+            if (fileToShow) {
+                const fileInfo = this.model.fileInfos.getMatch(
+                    fileToShow.storage,
+                    fileToShow.name,
+                    fileToShow.path
+                );
+                if (fileInfo) {
+                    this.views.open.showOpenFileInfo(fileInfo);
+                }
             }
         }
+
+        this.emit('lock');
+        this.__doNotRaiseLock = false;
     }
 
     selectLastOpenFile() {

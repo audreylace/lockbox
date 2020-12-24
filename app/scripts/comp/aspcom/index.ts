@@ -67,7 +67,7 @@ export async function initAspCom(): Promise<void> {
                     body = `You are about to run Lockbox in development mode. If you did not intend to do this then do not continue as this may be a phishing attempt. Note, lockbox will attempt to connect to ${serverpath}, make sure this is the URL you intended.`;
                 }
                 Alerts.yesno({
-                    header: 'Continue in development mode?',
+                    header: 'Continue in development mode',
                     body,
 
                     success: () => {
@@ -131,6 +131,7 @@ export function afterShowAppView(appView: AppView, appModel: AppModel) {
         (appView as any).on('lock', () => {
             if (ASPComServerModel.inTestingMode) {
                 document.body.innerHTML = '';
+                document.body.style.padding = '5px';
                 const h1 = document.createElement('h1');
                 h1.innerText = 'Workspace closed in lockbox testing mode';
                 const h2 = document.createElement('h2');

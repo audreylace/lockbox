@@ -1,12 +1,28 @@
 {
-    "plugins": ["prettier", "import", "babel"],
-    "extends": ["standard", "eslint:recommended", "plugin:prettier/recommended"],
+    "plugins": [
+        "prettier",
+        "import",
+        "babel"
+    ],
+    "extends": [
+        "standard",
+        "eslint:recommended",
+        "plugin:prettier/recommended"
+    ],
     "rules": {
-        "semi": ["error", "always"],
+        "semi": [
+            "error",
+            "always"
+        ],
         "one-var": "off",
         "space-before-function-paren": "off",
         "no-throw-literal": "off",
-        "camelcase": ["error", { "properties": "always" }],
+        "camelcase": [
+            "error",
+            {
+                "properties": "always"
+            }
+        ],
         "no-console": "error",
         "no-alert": "error",
         "no-debugger": "error",
@@ -16,7 +32,10 @@
         "no-var": "error",
         "prefer-const": "error",
         "no-unused-expressions": "off",
-        "strict": ["error", "never"],
+        "strict": [
+            "error",
+            "never"
+        ],
         "no-mixed-operators": "off",
         "prefer-promise-reject-errors": "off",
         "standard/no-callback-literal": "off",
@@ -37,6 +56,7 @@
         "no-unneeded-ternary": "error",
         "curly": "error",
         "prettier/prettier": "error",
+        "no-unused-vars": "off",
         "no-empty": "off",
         "no-restricted-syntax": [
             "error",
@@ -51,7 +71,7 @@
         "import/no-namespace": "error",
         "import/no-default-export": "error",
         "babel/no-unused-expressions": "error",
-        "node/no-callback-literal": "off"
+        "node/no-callback-literal": "off",
     },
     "parserOptions": {
         "sourceType": "module",
@@ -59,7 +79,7 @@
             "impliedStrict": true
         }
     },
-    "parser": "babel-eslint",
+    "parser": "@typescript-eslint/parser",
     "globals": {
         "_": true,
         "$": true

@@ -35,6 +35,17 @@ import {
     afterShowAppView
 } from 'comp/aspcom';
 
+const stopStyle = 'color: tomato;  font-size:60px;';
+// eslint-disable-next-line no-console
+console.log('%cStop!', stopStyle);
+
+const stopMessageStyle = 'color: black;  font-size:18px;';
+// eslint-disable-next-line no-console
+console.log(
+    '%cThis is a browser feature intended for developers. If someone told you to copy-paste something here to enable a feature or "hack" someone\'s account, it is a scam and will give them access to your account.',
+    stopMessageStyle
+);
+
 StartProfiler.milestone('loading modules');
 
 const ready = (Launcher && Launcher.ready) || $;
@@ -95,8 +106,8 @@ ready(() => {
             })
             .catch(() => {
                 Alerts.error({
-                    header: Locale.failedToConnectToWebServer,
-                    body: Locale.failedToConnectToWebserverBody,
+                    header: 'App failed to start',
+                    body: '',
                     buttons: [],
                     esc: false,
                     enter: false,
@@ -210,7 +221,6 @@ ready(() => {
 
         beforeShowAppView(appView, appModel);
 
-        appView.disableOpenScreen = true; // isAspComEnabled();
         appView.render();
 
         afterShowAppView(appView, appModel);

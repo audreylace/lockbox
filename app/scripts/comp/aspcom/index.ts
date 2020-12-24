@@ -17,7 +17,7 @@ export enum ASPComEnabledState {
 }
 export let _aspComEnabledFlag: ASPComEnabledState = ASPComEnabledState.NeedsCheck;
 
-export function isAspComEnabled() {
+export function isAspComEnabled(): boolean {
     if (_aspComEnabledFlag !== ASPComEnabledState.NeedsCheck) {
         return (
             _aspComEnabledFlag === ASPComEnabledState.On ||
@@ -25,15 +25,28 @@ export function isAspComEnabled() {
         );
     }
 
-    const appcomon = document.head.querySelector('meta[name=aspcom-enabled]') as HTMLMetaElement;
-    if (appcomon && appcomon.content && appcomon.content === 'true') {
-        _aspComEnabledFlag = ASPComEnabledState.On;
-        return true;
-    }
-
     _aspComEnabledFlag = ASPComEnabledState.Off;
 
-    return false;
+    const pageParams = new URLSearchParams(window.location.search);
+    if (pageParams.get('development') === 'true') {
+        _aspComEnabledFlag = ASPComEnabledState.Testing;
+    } else {
+        const appcomon = document.head.querySelector(
+            'meta[name=aspcom-enabled]'
+        ) as HTMLMetaElement;
+        if (appcomon && appcomon.content) {
+            switch (appcomon.content) {
+                case 'true':
+                    _aspComEnabledFlag = ASPComEnabledState.On;
+                    break;
+                case 'testing':
+                    _aspComEnabledFlag = ASPComEnabledState.Testing;
+                    break;
+            }
+        }
+    }
+
+    return isAspComEnabled();
 }
 
 export async function initAspCom(): Promise<void> {
@@ -41,7 +54,44 @@ export async function initAspCom(): Promise<void> {
         let apiPath;
 
         if (_aspComEnabledFlag === ASPComEnabledState.Testing) {
-            ASPComServerModel.initTestingState();
+            return new Promise((resolve, reject) => {
+                let serverpath: string | undefined;
+                const pageParams = new URLSearchParams(window.location.search);
+                if (pageParams.get('server') && pageParams.get('server') !== '') {
+                    serverpath = pageParams.get('server');
+                }
+
+                let body =
+                    'You are about to run Lockbox in development mode. If you did not intend to do this then do not continue as this may be a phishing attempt.';
+                if (serverpath) {
+                    body = `You are about to run Lockbox in development mode. If you did not intend to do this then do not continue as this may be a phishing attempt. Note, lockbox will attempt to connect to ${serverpath}, make sure this is the URL you intended.`;
+                }
+                Alerts.yesno({
+                    header: 'Continue in development mode?',
+                    body,
+
+                    success: () => {
+                        ASPComServerModel.initTestingState();
+
+                        if (serverpath) {
+                            _aspComEnabledFlag = ASPComEnabledState.On;
+                            ASPComServerModel.connectToServer(serverpath)
+                                .then(resolve)
+                                .catch(reject);
+                        } else {
+                            resolve();
+                        }
+                    },
+                    cancel: () => {
+                        document.body.innerHTML = '';
+                        document.body.style.background = 'red';
+                        const h1 = document.createElement('h1');
+                        h1.innerText =
+                            'Lockbox has been closed. Please close this tab immediately for your safety!';
+                        document.body.appendChild(h1);
+                    }
+                });
+            });
         } else {
             const apiPathMeta = document.head.querySelector(
                 'meta[name=aspcom-api-path]'

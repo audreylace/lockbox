@@ -657,7 +657,7 @@ class AppModel {
             needLoadKeyFile = true;
         }
         const file = new FileModel({
-            id: fileInfo ? fileInfo.id : IdGenerator.uuid(),
+            id: params.id || (fileInfo ? fileInfo.id : IdGenerator.uuid()),
             name: params.name,
             storage: params.storage,
             path: params.path,
